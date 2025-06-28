@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>멘토-멘티 매칭 플랫폼</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">멘토-멘티 매칭</h1>
+                <nav class="nav" id="nav">
+                    <button class="btn btn-primary" onclick="navLogin()">로그인</button>
+                    <button class="btn btn-secondary" onclick="navSignup()">회원가입</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Welcome Section -->
+                <section id="welcome" class="welcome">
+                    <h2>당신의 성장을 도와줄 멘토를 찾아보세요</h2>
+                    <p>전문가들과 연결되어 새로운 기회를 만들어보세요</p>
+                    
+                    <!-- 로그인 방식 선택 -->
+                    <div class="login-options">
+                        <h3>✨ 로그인 방식을 선택하세요</h3>
+                        
+                        <!-- 테스트 버튼 -->
+                        <button onclick="simpleTestClick()" style="background: red; color: white; padding: 10px; margin: 10px;">
+                            🧪 간단 테스트 버튼
+                        </button>
+                        
+                        <div class="login-option-buttons">
+                            <button class="btn btn-login-option manual" onclick="showManualLoginSimple()">
+                                ⌨️ 메뉴얼 로그인
+                                <small>이메일과 비밀번호 직접 입력</small>
+                            </button>
+                            <button class="btn btn-login-option icon" onclick="showIconLoginSimple()">
+                                👆 아이콘 로그인
+                                <small>사용자 아이콘 클릭으로 간편 로그인</small>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Manual Login Form -->
+                <section id="login" class="auth-form" style="display: none;">
+                    <div class="form-container">
+                        <h2>🔐 메뉴얼 로그인</h2>
+                        <p class="auth-description">이메일과 비밀번호를 직접 입력해주세요</p>
+                        
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label for="email">이메일</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">비밀번호</label>
+                                <input type="password" id="password" required>
+                            </div>
+                            <button type="submit" id="login" class="btn btn-primary btn-full">로그인</button>
+                        </form>
+                        <p class="auth-switch">
+                            계정이 없으신가요? <a href="#" onclick="showSignup()">회원가입</a><br>
+                            <a href="#" onclick="showWelcome()">← 돌아가기</a> | 
+                            <a href="#" onclick="showIconLogin()">아이콘 로그인</a>
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Icon Login Form -->
+                <section id="iconLogin" class="auth-form" style="display: none;">
+                    <div class="form-container">
+                        <h2>👆 아이콘 로그인</h2>
+                        <p class="auth-description">사용자 아이콘을 클릭해서 간편하게 로그인하세요</p>
+                        
+                        <!-- 멘토 영역 -->
+                        <div class="role-section mentor-section">
+                            <h3 class="role-title">
+                                <span class="role-icon">👨‍💻</span>
+                                멘토 로그인
+                            </h3>
+                            <div class="role-users-grid" id="mentorLoginGrid">
+                                <!-- 멘토들이 동적으로 생성됨 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 영역 구분선 -->
+                        <div class="role-divider">
+                            <span>또는</span>
+                        </div>
+                        
+                        <!-- 멘티 영역 -->
+                        <div class="role-section mentee-section">
+                            <h3 class="role-title">
+                                <span class="role-icon">🧑‍🎓</span>
+                                멘티 로그인
+                            </h3>
+                            <div class="role-users-grid" id="menteeLoginGrid">
+                                <!-- 멘티들이 동적으로 생성됨 -->
+                            </div>
+                        </div>
+                        
+                        <p class="auth-switch">
+                            <a href="#" onclick="showWelcome()">← 돌아가기</a> | 
+                            <a href="#" onclick="showManualLogin()">메뉴얼 로그인</a>
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Signup Form -->
+                <section id="signup" class="auth-form" style="display: none;">
+                    <div class="form-container">
+                        <h2>회원가입</h2>
+                        <form id="signupForm">
+                            <div class="form-group">
+                                <label for="signupName">이름</label>
+                                <input type="text" id="signupName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">이메일</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">비밀번호</label>
+                                <input type="password" id="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="role">역할</label>
+                                <select id="role" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="mentor">멘토</option>
+                                    <option value="mentee">멘티</option>
+                                </select>
+                            </div>
+                            <button type="submit" id="signup" class="btn btn-primary btn-full">회원가입</button>
+                        </form>
+                        <p class="auth-switch">
+                            이미 계정이 있으신가요? <a href="#" onclick="showLogin()">로그인</a>
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Dashboard -->
+                <section id="dashboard" class="dashboard" style="display: none;">
+                    <h2>대시보드</h2>
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card" onclick="showProfile()">
+                            <i class="fas fa-user"></i>
+                            <h3>프로필 관리</h3>
+                            <p>내 정보를 수정하세요</p>
+                        </div>
+                        <div class="dashboard-card" onclick="showMentors()">
+                            <i class="fas fa-users"></i>
+                            <h3>멘토 찾기</h3>
+                            <p>멘토를 검색하고 연결하세요</p>
+                        </div>
+                        <div class="dashboard-card" onclick="showMatches()">
+                            <i class="fas fa-handshake"></i>
+                            <h3>매칭 관리</h3>
+                            <p>매칭 요청을 확인하세요</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Section -->
+                <section id="profile" class="profile" style="display: none;">
+                    <h2>프로필 관리</h2>
+                    <div class="profile-container">
+                        <form id="profileForm">
+                            <div class="profile-image">
+                                <img id="profile-photo" src="https://placehold.co/500x500.jpg?text=USER" alt="프로필 이미지">
+                                <input type="file" id="profile" accept="image/*" style="display: none;">
+                                <button type="button" onclick="document.getElementById('profile').click()" class="btn btn-secondary">이미지 변경</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="name">이름</label>
+                                <input type="text" id="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="bio">자기소개</label>
+                                <textarea id="bio" rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="skillsets">전문 분야 (쉼표로 구분)</label>
+                                <input type="text" id="skillsets" placeholder="예: JavaScript, React, Node.js">
+                            </div>
+                            <button type="submit" id="save" class="btn btn-primary">저장</button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Mentors List -->
+                <section id="mentors" class="mentors" style="display: none;">
+                    <h2>멘토 찾기</h2>
+                    <div class="search-controls">
+                        <input type="text" id="search" placeholder="이름이나 전문분야로 검색...">
+                        <div class="sort-options">
+                            <label>정렬:</label>
+                            <input type="radio" id="name" name="sort" value="name" checked>
+                            <label for="name">이름순</label>
+                            <input type="radio" id="skill" name="sort" value="skill">
+                            <label for="skill">전문분야순</label>
+                        </div>
+                        <button class="btn btn-primary" onclick="searchMentors()">검색</button>
+                    </div>
+                    <div id="mentorsList" class="mentors-grid">
+                        <!-- 동적으로 채워짐 - 각 멘토는 class="mentor"를 가져야 함 -->
+                        <!-- 예시 멘토 카드 (실제로는 JavaScript로 동적 생성) -->
+                        <div class="mentor" data-mentor-id="1" style="display: none;">
+                            <div class="mentor-image">
+                                <img src="https://placehold.co/500x500.jpg?text=MENTOR" alt="멘토 이미지">
+                            </div>
+                            <div class="mentor-info">
+                                <h3 class="mentor-name">멘토 이름</h3>
+                                <p class="mentor-bio">자기소개</p>
+                                <div class="mentor-skills">전문분야</div>
+                                <div class="mentor-actions">
+                                    <textarea id="message" data-mentor-id="1" data-testid="message-1" placeholder="매칭 요청 메시지를 입력하세요..." rows="3"></textarea>
+                                    <button id="request" class="btn btn-primary" onclick="sendMatchRequest(1)">매칭 요청</button>
+                                    <div id="request-status" class="request-status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Matches Section -->
+                <section id="matches" class="matches" style="display: none;">
+                    <h2>매칭 관리</h2>
+                    <div class="matches-tabs">
+                        <button class="tab-btn active" onclick="showMatchTab('received')">받은 요청</button>
+                        <button class="tab-btn" onclick="showMatchTab('sent')">보낸 요청</button>
+                    </div>
+                    <div id="matchesList" class="matches-list">
+                        <!-- 동적으로 채워짐 -->
+                        <!-- 예시 매칭 요청 (실제로는 JavaScript로 동적 생성) -->
+                        <div class="match-request" style="display: none;">
+                            <div class="request-message" mentee="1">
+                                <p>매칭 요청 메시지 내용</p>
+                            </div>
+                            <div class="request-actions">
+                                <button id="accept" class="btn btn-success" onclick="acceptRequest(1)">수락</button>
+                                <button id="reject" class="btn btn-danger" onclick="rejectRequest(1)">거절</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // 에러 핸들링
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('JavaScript 에러:', message, 'at', source, lineno);
+            return false;
+        };
+        
+        // 간단한 테스트 함수
+        function simpleTestClick() {
+            alert('간단 테스트 버튼이 클릭되었습니다!');
+            console.log('간단 테스트 클릭됨');
+        }
+        
+        // 네비게이션 함수들
+        function navLogin() {
+            console.log('네비게이션 로그인 클릭됨');
+            alert('네비게이션에서 로그인 버튼을 클릭했습니다!');
+            showManualLoginSimple();
+        }
+        
+        function navSignup() {
+            console.log('네비게이션 회원가입 클릭됨');
+            alert('네비게이션에서 회원가입 버튼을 클릭했습니다!');
+            showSignupSimple();
+        }
+        
+        function showSignupSimple() {
+            console.log('회원가입 화면 호출됨');
+            hideAllSections();
+            document.getElementById('signup').style.display = 'block';
+        }
+        
+        // 간단한 로그인 화면 전환 함수들
+        function showManualLoginSimple() {
+            console.log('메뉴얼 로그인 호출됨');
+            alert('메뉴얼 로그인 화면으로 이동합니다');
+            hideAllSections();
+            document.getElementById('login').style.display = 'block';
+        }
+        
+        function showIconLoginSimple() {
+            console.log('아이콘 로그인 호출됨');
+            alert('아이콘 로그인 화면으로 이동합니다');
+            hideAllSections();
+            document.getElementById('iconLogin').style.display = 'block';
+        }
+        
+        function hideAllSections() {
+            const sections = document.querySelectorAll('main section');
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+        }
+        
+        // 로그인 폼 처리
+        function handleLogin(email, password) {
+            console.log('로그인 시도:', email);
+            alert('로그인 시도 중: ' + email);
+            
+            // 간단한 테스트용 로그인
+            if (email === 'test@test.com' && password === 'password') {
+                alert('테스트 로그인 성공!');
+                hideAllSections();
+                document.getElementById('dashboard').style.display = 'block';
+            } else {
+                alert('로그인 실패. 테스트 계정: test@test.com / password');
+            }
+        }
+        
+        // 회원가입 폼 처리
+        function handleSignup(name, email, password, role) {
+            console.log('회원가입 시도:', name, email, role);
+            alert('회원가입 시도: ' + name + ' (' + email + ') - ' + role);
+            
+            if (name && email && password && role) {
+                alert('회원가입 성공! 로그인 화면으로 이동합니다.');
+                showManualLoginSimple();
+            } else {
+                alert('모든 필드를 입력해주세요.');
+            }
+        }
+        
+        // 매칭 요청 관련 함수들
+        function sendMatchRequest(mentorId) {
+            const messageEl = document.querySelector(`textarea[data-mentor-id="${mentorId}"]`);
+            const message = messageEl ? messageEl.value : '';
+            
+            console.log('매칭 요청 전송:', mentorId, message);
+            alert(`멘토 ${mentorId}에게 매칭 요청을 보냅니다: ${message}`);
+            
+            // 요청 상태 업데이트
+            const statusEl = document.getElementById('request-status');
+            if (statusEl) {
+                statusEl.textContent = '요청이 전송되었습니다.';
+                statusEl.className = 'request-status pending';
+            }
+        }
+        
+        function acceptRequest(menteeId) {
+            console.log('매칭 요청 수락:', menteeId);
+            alert(`멘티 ${menteeId}의 요청을 수락했습니다.`);
+        }
+        
+        function rejectRequest(menteeId) {
+            console.log('매칭 요청 거절:', menteeId);
+            alert(`멘티 ${menteeId}의 요청을 거절했습니다.`);
+        }
+        
+        function searchMentors() {
+            const searchTerm = document.getElementById('search').value;
+            const sortBy = document.querySelector('input[name="sort"]:checked').value;
+            
+            console.log('멘토 검색:', searchTerm, '정렬:', sortBy);
+            alert(`검색어: ${searchTerm}, 정렬: ${sortBy}`);
+        }
+        
+        // 네비게이션 함수들 추가
+        function showProfile() {
+            console.log('프로필 페이지로 이동');
+            hideAllSections();
+            document.getElementById('profile').style.display = 'block';
+        }
+        
+        function showMentors() {
+            console.log('멘토 찾기 페이지로 이동');
+            hideAllSections();
+            document.getElementById('mentors').style.display = 'block';
+        }
+        
+        function showMatches() {
+            console.log('매칭 관리 페이지로 이동');
+            hideAllSections();
+            document.getElementById('matches').style.display = 'block';
+        }
+        
+        function showMatchTab(tab) {
+            console.log('매칭 탭 전환:', tab);
+            // 탭 활성화 로직 추가 필요
+        }
+        
+        function showWelcome() {
+            console.log('웰컴 페이지로 이동');
+            hideAllSections();
+            document.getElementById('welcome').style.display = 'block';
+        }
+        
+        function showSignup() {
+            console.log('회원가입 페이지로 이동');
+            hideAllSections();
+            document.getElementById('signup').style.display = 'block';
+        }
+        
+        function showLogin() {
+            console.log('로그인 페이지로 이동');
+            hideAllSections();
+            document.getElementById('login').style.display = 'block';
+        }
+        
+        function showManualLogin() {
+            console.log('메뉴얼 로그인 페이지로 이동');
+            hideAllSections();
+            document.getElementById('login').style.display = 'block';
+        }
+        
+        function showIconLogin() {
+            console.log('아이콘 로그인 페이지로 이동');
+            hideAllSections();
+            document.getElementById('iconLogin').style.display = 'block';
+        }
+        
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('HTML DOMContentLoaded 이벤트 발생');
+            alert('페이지가 로드되었습니다! JavaScript가 동작합니다.');
+            
+            // 로그인 폼 이벤트 리스너 추가
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    handleLogin(email, password);
+                });
+                console.log('로그인 폼 이벤트 리스너 추가됨');
+            }
+            
+            // 회원가입 폼 이벤트 리스너 추가
+            const signupForm = document.getElementById('signupForm');
+            if (signupForm) {
+                signupForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const name = document.getElementById('signupName').value;
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const role = document.getElementById('role').value;
+                    handleSignup(name, email, password, role);
+                });
+                console.log('회원가입 폼 이벤트 리스너 추가됨');
+            }
+        });
+        
+        // 함수들이 정의되어 있는지 테스트
+        setTimeout(function() {
+            console.log('showManualLogin 함수 존재:', typeof window.showManualLogin);
+            console.log('showIconLogin 함수 존재:', typeof window.showIconLogin);
+        }, 1000);
+        
+        // 안전한 함수 호출을 위한 래퍼
+        function handleManualLogin() {
+            console.log('handleManualLogin 호출됨');
+            alert('메뉴얼 로그인 버튼이 클릭되었습니다!');
+            if (typeof window.showManualLogin === 'function') {
+                window.showManualLogin();
+            } else {
+                console.error('showManualLogin 함수를 찾을 수 없습니다');
+                alert('showManualLogin 함수를 찾을 수 없습니다. 페이지를 새로고침해 주세요.');
+            }
+        }
+        
+        function handleIconLogin() {
+            console.log('handleIconLogin 호출됨');
+            alert('아이콘 로그인 버튼이 클릭되었습니다!');
+            if (typeof window.showIconLogin === 'function') {
+                window.showIconLogin();
+            } else {
+                console.error('showIconLogin 함수를 찾을 수 없습니다');
+                alert('showIconLogin 함수를 찾을 수 없습니다. 페이지를 새로고침해 주세요.');
+            }
+        }
+    </script>
+</body>
+</html>

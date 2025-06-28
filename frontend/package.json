@@ -1,0 +1,9 @@
+{
+  "name": "mentor-mentee-frontend",
+  "version": "1.0.0",
+  "description": "Mentor-Mentee Matching App Frontend",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 3000 || python -m SimpleHTTPServer 3000"
+  }
+}

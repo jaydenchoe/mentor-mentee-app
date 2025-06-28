@@ -1,0 +1,770 @@
+// API Configuration
+const API_BASE_URL = 'http://localhost:8080';
+
+// Global State
+let currentUser = null;
+let authToken = null;
+let demoUsers = []; // 데모 사용자 목록
+let currentPage = 'welcome'; // 현재 페이지
+let previousPage = null; // 바로 이전 페이지
+
+// Load demo users from backend
+async function loadDemoUsers() {
+    try {
+        demoUsers = await apiCall('/api/demo-users');
+        console.log('데모 사용자들 로드됨:', demoUsers);
+    } catch (error) {
+        console.error('데모 사용자 로드 실패:', error);
+        // 폴백 데이터
+        demoUsers = [
+        loadMatchRequests('received'); // 목록 새로고침
+    } catch (error) {
+        showToast('응답 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+};
+        // 폴백 데이터
+        demoUsers = [
+            {
+                email: 'mentor1@example.com',
+                password: 'password123',
+                name: '김멘토',
+                role: 'mentor',
+                avatar: '👨‍💻',
+                description: '프론트엔드 전문가'
+            },
+            {
+                email: 'mentor2@example.com',
+                password: 'password123',
+                name: '이멘토',
+                role: 'mentor',
+                avatar: '👩‍💼',
+                description: '백엔드 전문가'
+            },
+            {
+                email: 'mentee1@example.com',
+                password: 'password123',
+                name: '박멘티',
+                role: 'mentee',
+                avatar: '🧑‍🎓',
+                description: '신입 개발자'
+            },
+            {
+                email: 'mentee2@example.com',
+                password: 'password123',
+                name: '최멘티',
+                role: 'mentee',
+                avatar: '👩‍🎓',
+                description: '취업 준비생'
+            }
+        ];
+    }
+}
+
+// Utility Functions
+function showLoading() {
+    document.getElementById('loading').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function hideAllSections() {
+    const sections = ['welcome', 'login', 'iconLogin', 'signup', 'dashboard', 'profile', 'mentors', 'matches'];
+    sections.forEach(section => {
+        const element = document.getElementById(section);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+}
+
+function updateNavigation() {
+    const nav = document.getElementById('nav');
+    
+    // 뒤로가기 버튼 HTML (이전 페이지가 있고 welcome이 아닌 경우에만)
+    const backButton = (previousPage && previousPage !== 'welcome') ? 
+        `<button class="btn btn-back" onclick="goBack()" title="이전 화면으로">
+            ← 뒤로
+        </button>` : '';
+    
+    if (currentUser) {
+        nav.innerHTML = `
+            ${backButton}
+            <div class="nav-user-info">
+                <span>안녕하세요, ${currentUser.name}님</span>
+                <button class="btn btn-secondary" onclick="showDashboard()">대시보드</button>
+                <button class="btn btn-outline" onclick="logout()">로그아웃</button>
+            </div>
+        `;
+    } else {
+        nav.innerHTML = `
+            ${backButton}
+            <div class="nav-auth-buttons">
+                <button class="btn btn-primary" onclick="showManualLogin()">로그인</button>
+                <button class="btn btn-secondary" onclick="showSignup()">회원가입</button>
+            </div>
+        `;
+    }
+}
+
+// API Functions
+async function apiCall(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        },
+        ...options
+    };
+
+    if (authToken) {
+        config.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    try {
+        const response = await fetch(url, config);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'API 호출 실패');
+        }
+        
+        return data;
+    } catch (error) {
+        throw new Error(error.message || '네트워크 오류가 발생했습니다');
+    }
+}
+
+// Authentication Functions
+async function login(email, password) {
+    showLoading();
+    try {
+        const data = await apiCall('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+        
+        authToken = data.access_token;
+        currentUser = data.user;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        updateNavigation();
+        showDashboard();
+        showToast('로그인되었습니다', 'success');
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function signup(name, email, password, role) {
+    showLoading();
+    try {
+        await apiCall('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ name, email, password, role })
+        });
+        
+        showToast('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
+        showLogin();
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function logout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    
+    // 페이지 상태 초기화
+    currentPage = 'welcome';
+    previousPage = null;
+    
+    updateNavigation();
+    showWelcome();
+    showToast('로그아웃되었습니다', 'info');
+}
+
+// Profile Functions
+async function loadProfile() {
+    if (!currentUser) return;
+    
+    try {
+        const profile = await apiCall(`/api/users/${currentUser.id}/profile`);
+        
+        document.getElementById('name').value = profile.name || '';
+        document.getElementById('bio').value = profile.bio || '';
+        document.getElementById('skillsets').value = profile.skills ? profile.skills.join(', ') : '';
+        
+        // 기본 이미지 URL 설정 (사용자 스토리 요구사항)
+        const defaultImageUrl = currentUser.role === 'mentor' 
+            ? 'https://placehold.co/500x500.jpg?text=MENTOR'
+            : 'https://placehold.co/500x500.jpg?text=MENTEE';
+            
+        if (profile.profile_image) {
+            document.getElementById('profile-photo').src = `${API_BASE_URL}/uploads/${profile.profile_image}`;
+        } else {
+            document.getElementById('profile-photo').src = defaultImageUrl;
+        }
+    } catch (error) {
+        showToast('프로필 로드 실패: ' + error.message, 'error');
+    }
+}
+
+async function saveProfile() {
+    showLoading();
+    try {
+        const name = document.getElementById('name').value;
+        const bio = document.getElementById('bio').value;
+        const skillsText = document.getElementById('skillsets').value;
+        const skills = skillsText ? skillsText.split(',').map(s => s.trim()) : [];
+        
+        await apiCall(`/api/users/${currentUser.id}/profile`, {
+            method: 'PUT',
+            body: JSON.stringify({ name, bio, skills })
+        });
+        
+        currentUser.name = name;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        updateNavigation();
+        
+        showToast('프로필이 저장되었습니다', 'success');
+    } catch (error) {
+        showToast('프로필 저장 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function uploadProfileImage() {
+    const input = document.getElementById('profile');
+    const file = input.files[0];
+    
+    if (!file) return;
+    
+    showLoading();
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/users/${currentUser.id}/profile/image`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('이미지 업로드 실패');
+        }
+        
+        const data = await response.json();
+        document.getElementById('profileImg').src = `${API_BASE_URL}/uploads/${data.filename}`;
+        
+        showToast('프로필 이미지가 업데이트되었습니다', 'success');
+    } catch (error) {
+        showToast('이미지 업로드 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Mentor Functions
+async function loadMentors(search = '', sortBy = 'name') {
+    showLoading();
+    try {
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (sortBy) params.append('sort', sortBy);
+        
+        const mentors = await apiCall(`/api/mentors?${params.toString()}`);
+        displayMentors(mentors);
+    } catch (error) {
+        showToast('멘토 목록 로드 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayMentors(mentors) {
+    const container = document.getElementById('mentorsList');
+    
+    if (mentors.length === 0) {
+        container.innerHTML = '<p class="text-center">검색 결과가 없습니다.</p>';
+        return;
+    }
+    
+    container.innerHTML = mentors.map(mentor => `
+        <div class="mentor-card mentor">
+            <div class="mentor-header">
+                <img src="${mentor.profile_image ? `${API_BASE_URL}/uploads/${mentor.profile_image}` : 'https://placehold.co/500x500.jpg?text=MENTOR'}" 
+                     alt="${mentor.name}" class="mentor-avatar">
+                <div class="mentor-info">
+                    <h3>${mentor.name}</h3>
+                    <p>${mentor.role}</p>
+                </div>
+            </div>
+            <p>${mentor.bio || '자기소개가 없습니다.'}</p>
+            <div class="mentor-skills">
+                ${(mentor.skills || []).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+            </div>
+            <div class="request-section">
+                <textarea id="message" data-mentor-id="${mentor.id}" data-testid="message-${mentor.id}" 
+                         placeholder="멘토에게 보낼 메시지를 입력하세요..." rows="3"></textarea>
+                <div id="request-status" class="request-status"></div>
+                <button id="request" class="btn btn-primary btn-full" onclick="sendMatchRequest(${mentor.id})">
+                    매칭 요청
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function searchMentors() {
+    const search = document.getElementById('search').value;
+    const sortBy = document.getElementById('sortSelect').value;
+    await loadMentors(search, sortBy);
+}
+
+// Match Functions
+async function sendMatchRequest(mentorId) {
+    if (!currentUser) {
+        showToast('로그인이 필요합니다', 'error');
+        return;
+    }
+    
+    // 메시지 가져오기
+    const messageElement = document.querySelector(`[data-mentor-id="${mentorId}"]`);
+    const message = messageElement ? messageElement.value.trim() : '';
+    
+    if (!message) {
+        showToast('메시지를 입력해주세요', 'error');
+        return;
+    }
+    
+    showLoading();
+    try {
+        // 기존 요청 확인 (중복 요청 방지)
+        const existingRequests = await apiCall('/api/match-requests/outgoing');
+        const hasPendingRequest = existingRequests.some(req => 
+            req.mentor_id === mentorId && req.status === 'pending'
+        );
+        
+        if (hasPendingRequest) {
+            showToast('이미 해당 멘토에게 요청을 보냈습니다', 'error');
+            return;
+        }
+        
+        await apiCall('/api/match-requests', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                mentor_id: mentorId,
+                message: message 
+            })
+        });
+        
+        // 요청 상태 업데이트
+        const statusElement = messageElement.parentElement.querySelector('#request-status');
+        if (statusElement) {
+            statusElement.textContent = '요청이 전송되었습니다';
+            statusElement.className = 'request-status sent';
+        }
+        
+        // 버튼 비활성화
+        const buttonElement = messageElement.parentElement.querySelector('#request');
+        if (buttonElement) {
+            buttonElement.textContent = '요청 전송됨';
+            buttonElement.disabled = true;
+        }
+        
+        showToast('매칭 요청을 보냈습니다', 'success');
+    } catch (error) {
+        showToast('매칭 요청 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function loadMatchRequests(type = 'received') {
+    showLoading();
+    try {
+        const endpoint = type === 'received' ? '/api/match-requests/incoming' : '/api/match-requests/outgoing';
+        const matches = await apiCall(endpoint);
+        displayMatches(matches, type);
+    } catch (error) {
+        showToast('매칭 요청 로드 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayMatches(matches, type) {
+    const container = document.getElementById('matchesList');
+    
+    if (matches.length === 0) {
+        container.innerHTML = '<p class="text-center">매칭 요청이 없습니다.</p>';
+        return;
+    }
+    
+    container.innerHTML = matches.map(match => {
+        const user = type === 'received' ? match.mentee : match.mentor;
+        const statusClass = `status-${match.status}`;
+        const statusText = {
+            'pending': '대기중',
+            'accepted': '수락됨',
+            'rejected': '거절됨'
+        }[match.status];
+        
+        return `
+            <div class="match-card">
+                <div class="match-header">
+                    <div class="match-user">
+                        <img src="${user.profile_image ? `${API_BASE_URL}/uploads/${user.profile_image}` : 
+                            (user.role === 'mentor' ? 'https://placehold.co/500x500.jpg?text=MENTOR' : 'https://placehold.co/500x500.jpg?text=MENTEE')}" 
+                             alt="${user.name}" class="match-avatar">
+                        <div>
+                            <h4>${user.name}</h4>
+                            <p>${user.role}</p>
+                        </div>
+                    </div>
+                    <div class="match-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="request-message" mentee="${type === 'received' ? user.id : ''}">${match.message || '메시지가 없습니다.'}</div>
+                <p class="text-muted">요청일: ${new Date(match.created_at).toLocaleDateString()}</p>
+                ${match.status === 'pending' ? getMatchActions(match, type) : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function getMatchActions(match, type) {
+    if (type === 'received') {
+        return `
+            <div class="match-actions">
+                <button id="accept" class="btn btn-success" onclick="respondToMatch(${match.id}, 'accepted')">수락</button>
+                <button id="reject" class="btn btn-danger" onclick="respondToMatch(${match.id}, 'rejected')">거절</button>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="match-actions">
+                <button class="btn btn-danger" onclick="cancelMatchRequest(${match.id})">요청 취소</button>
+            </div>
+        `;
+    }
+}
+
+async function respondToMatch(matchId, response) {
+    showLoading();
+    try {
+        await apiCall(`/api/match-requests/${matchId}/respond`, {
+            method: 'POST',
+            body: JSON.stringify({ action: response })
+        });
+        
+        showToast(`매칭을 ${response === 'accepted' ? '수락' : '거절'}했습니다`, 'success');
+        loadMatchRequests('received');
+    } catch (error) {
+        showToast('응답 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function cancelMatchRequest(matchId) {
+    showLoading();
+    try {
+        await apiCall(`/api/match-requests/${matchId}`, {
+            method: 'DELETE'
+        });
+        
+        showToast('매칭 요청을 취소했습니다', 'success');
+        loadMatchRequests('sent');
+    } catch (error) {
+        showToast('취소 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Quick Login for Demo Users - 간단한 버전 (계정이 이미 존재한다고 가정)
+async function quickLogin(email, password) {
+    console.log('QuickLogin 시작:', email);
+    showLoading();
+    try {
+    // 자동으로 입력값 설정
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    if (emailInput) emailInput.value = email;
+    if (passwordInput) passwordInput.value = password;
+        
+        // 로그인 수행
+        console.log('로그인 시도 중...');
+        await login(email, password);
+        
+        showToast(`${email}로 자동 로그인되었습니다! 🎉`, 'success');
+    } catch (error) {
+        console.log('로그인 실패:', error.message);
+        showToast('로그인 실패: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Create Demo Users (이제 사용하지 않음 - 백엔드에서 미리 생성됨)
+async function createDemoUser(email, password) {
+    // 더 이상 필요없음 - 백엔드에서 미리 생성
+    return;
+}
+
+// Navigation Functions
+function showWelcome() {
+    hideAllSections();
+    document.getElementById('welcome').style.display = 'block';
+    navigateToPage('welcome');
+}
+
+function showManualLogin() {
+    hideAllSections();
+    document.getElementById('login').style.display = 'block';
+    navigateToPage('login');
+}
+
+function showIconLogin() {
+    hideAllSections();
+    document.getElementById('iconLogin').style.display = 'block';
+    navigateToPage('iconLogin');
+    
+    // 아이콘 로그인 페이지의 데모 사용자들을 동적으로 생성
+    updateIconLoginUsers();
+}
+
+// 기존 호환성을 위한 함수
+function showLogin() {
+    showManualLogin();
+}
+
+// 아이콘 로그인 페이지의 데모 사용자들 업데이트
+function updateIconLoginUsers() {
+    const mentorGrid = document.getElementById('mentorLoginGrid');
+    const menteeGrid = document.getElementById('menteeLoginGrid');
+    
+    if (demoUsers.length > 0) {
+        // 멘토와 멘티 분리
+        const mentors = demoUsers.filter(user => user.role === 'mentor');
+        const mentees = demoUsers.filter(user => user.role === 'mentee');
+        
+        // 멘토 영역 업데이트
+        if (mentorGrid) {
+            mentorGrid.innerHTML = mentors.map(user => `
+                <div class="demo-user mentor-user" onclick="quickLogin('${user.email}', '${user.password}')">
+                    <div class="demo-avatar ${user.role}">${user.avatar}</div>
+                    <span>${user.name}</span>
+                    <small>${user.description}</small>
+                </div>
+            `).join('');
+        }
+        
+        // 멘티 영역 업데이트
+        if (menteeGrid) {
+            menteeGrid.innerHTML = mentees.map(user => `
+                <div class="demo-user mentee-user" onclick="quickLogin('${user.email}', '${user.password}')">
+                    <div class="demo-avatar ${user.role}">${user.avatar}</div>
+                    <span>${user.name}</span>
+                    <small>${user.description}</small>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+function showSignup() {
+    hideAllSections();
+    document.getElementById('signup').style.display = 'block';
+    navigateToPage('signup');
+}
+
+function showDashboard() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    hideAllSections();
+    document.getElementById('dashboard').style.display = 'block';
+    navigateToPage('dashboard');
+}
+
+function showProfile() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    hideAllSections();
+    document.getElementById('profile').style.display = 'block';
+    loadProfile();
+    navigateToPage('profile');
+}
+
+function showMentors() {
+    hideAllSections();
+    document.getElementById('mentors').style.display = 'block';
+    loadMentors();
+    navigateToPage('mentors');
+}
+
+function showMatches() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    hideAllSections();
+    document.getElementById('matches').style.display = 'block';
+    loadMatchRequests('received');
+    navigateToPage('matches');
+}
+
+function showMatchTab(type) {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    const activeTab = type === 'received' ? tabs[0] : tabs[1];
+    activeTab.classList.add('active');
+    
+    loadMatchRequests(type);
+}
+
+// Page Navigation Management
+function navigateToPage(page) {
+    // 이전 페이지 저장 (welcome이 아닌 경우에만)
+    if (currentPage !== 'welcome') {
+        previousPage = currentPage;
+    }
+    currentPage = page;
+    updateNavigation();
+}
+
+function goBack() {
+    if (previousPage) {
+        // 간단히 이전 페이지로 이동
+        switch(previousPage) {
+            case 'welcome':
+                showWelcome();
+                break;
+            case 'login':
+                showManualLogin();
+                break;
+            case 'iconLogin':
+                showIconLogin();
+                break;
+            case 'signup':
+                showSignup();
+                break;
+            case 'dashboard':
+                showDashboard();
+                break;
+            case 'profile':
+                showProfile();
+                break;
+            case 'mentors':
+                showMentors();
+                break;
+            case 'matches':
+                showMatches();
+                break;
+            default:
+                showWelcome();
+        }
+    }
+}
+
+// App Initialization
+async function initializeApp() {
+    // Initialize current page
+    currentPage = 'welcome';
+    previousPage = null;
+    
+    // Load demo users first
+    await loadDemoUsers();
+    
+    // Check for existing auth token
+    const savedToken = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('currentUser');
+    
+    if (savedToken && savedUser) {
+        authToken = savedToken;
+        currentUser = JSON.parse(savedUser);
+        navigateToPage('dashboard');
+        showDashboard();
+    } else {
+        showWelcome();
+    }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved authentication state
+    const savedToken = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('currentUser');
+    
+    if (savedToken && savedUser) {
+        authToken = savedToken;
+        currentUser = JSON.parse(savedUser);
+        updateNavigation();
+        showDashboard();
+    } else {
+        showWelcome();
+    }
+    
+    // Form event listeners
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        login(email, password);
+    });
+    
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+        signup(name, email, password, role);
+    });
+    
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveProfile();
+    });
+    
+    document.getElementById('profile').addEventListener('change', uploadProfileImage);
+    
+    // Search functionality
+    document.getElementById('search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchMentors();
+        }
+    });
+});
