@@ -1,0 +1,107 @@
+/* 아이콘 로그인 스타일 */
+.user-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    text-align: center;
+}
+
+.user-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.user-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.user-card .user-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.user-card .user-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.role-users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.role-section {
+    margin: 20px 0;
+}
+
+.role-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.role-icon {
+    font-size: 24px;
+}
+
+.role-divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.role-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e5e9;
+}
+
+.role-divider span {
+    background: white;
+    padding: 0 20px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* 멘토 섹션 스타일 */
+.mentor-section .role-title {
+    color: #007bff;
+}
+
+.mentor-section .user-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.15);
+}
+
+/* 멘티 섹션 스타일 */
+.mentee-section .role-title {
+    color: #28a745;
+}
+
+.mentee-section .user-card:hover {
+    border-color: #28a745;
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.15);
+}

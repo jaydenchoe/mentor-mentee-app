@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>멘토-멘티 매칭 플랫폼</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="icon-login-styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -176,7 +177,7 @@
                     <div class="profile-container">
                         <form id="profileForm">
                             <div class="profile-image">
-                                <img id="profile-photo" src="https://placehold.co/500x500.jpg?text=USER" alt="프로필 이미지">
+                                <img id="profile-photo" src="https://via.placeholder.com/150" alt="프로필 이미지">
                                 <input type="file" id="profile" accept="image/*" style="display: none;">
                                 <button type="button" onclick="document.getElementById('profile').click()" class="btn btn-secondary">이미지 변경</button>
                             </div>
@@ -321,31 +322,100 @@
         }
         
         // 로그인 폼 처리
-        function handleLogin(email, password) {
+        async function handleLogin(email, password) {
             console.log('로그인 시도:', email);
-            alert('로그인 시도 중: ' + email);
             
-            // 간단한 테스트용 로그인
-            if (email === 'test@test.com' && password === 'password') {
-                alert('테스트 로그인 성공!');
-                hideAllSections();
-                document.getElementById('dashboard').style.display = 'block';
-            } else {
-                alert('로그인 실패. 테스트 계정: test@test.com / password');
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    alert('로그인 성공!');
+                    hideAllSections();
+                    document.getElementById('dashboard').style.display = 'block';
+                    updateNavigation(data.user.role);
+                } else {
+                    const error = await response.json();
+                    alert('로그인 실패: ' + (error.message || '이메일 또는 비밀번호가 올바르지 않습니다.'));
+                }
+            } catch (error) {
+                console.error('로그인 에러:', error);
+                alert('로그인 중 오류가 발생했습니다.');
             }
         }
         
         // 회원가입 폼 처리
-        function handleSignup(name, email, password, role) {
+        async function handleSignup(name, email, password, role) {
             console.log('회원가입 시도:', name, email, role);
-            alert('회원가입 시도: ' + name + ' (' + email + ') - ' + role);
             
-            if (name && email && password && role) {
-                alert('회원가입 성공! 로그인 화면으로 이동합니다.');
-                showManualLoginSimple();
-            } else {
-                alert('모든 필드를 입력해주세요.');
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        password: password,
+                        role: role
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('회원가입 성공! 로그인 해주세요.');
+                    showManualLoginSimple();
+                } else {
+                    const error = await response.json();
+                    alert('회원가입 실패: ' + (error.message || '회원가입 중 오류가 발생했습니다.'));
+                }
+            } catch (error) {
+                console.error('회원가입 에러:', error);
+                alert('회원가입 중 오류가 발생했습니다.');
             }
+        }
+        
+        // 네비게이션 업데이트
+        function updateNavigation(role) {
+            const nav = document.getElementById('nav');
+            if (role === 'mentor') {
+                nav.innerHTML = `
+                    <button class="btn btn-secondary" onclick="showProfile()">프로필</button>
+                    <button class="btn btn-secondary" onclick="showMatches()">요청 관리</button>
+                    <button class="btn btn-primary" onclick="logout()">로그아웃</button>
+                `;
+            } else if (role === 'mentee') {
+                nav.innerHTML = `
+                    <button class="btn btn-secondary" onclick="showProfile()">프로필</button>
+                    <button class="btn btn-secondary" onclick="showMentors()">멘토 찾기</button>
+                    <button class="btn btn-secondary" onclick="showMatches()">요청 관리</button>
+                    <button class="btn btn-primary" onclick="logout()">로그아웃</button>
+                `;
+            }
+        }
+        
+        // 로그아웃
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            document.getElementById('nav').innerHTML = `
+                <button class="btn btn-primary" onclick="navLogin()">로그인</button>
+                <button class="btn btn-secondary" onclick="navSignup()">회원가입</button>
+            `;
+            hideAllSections();
+            document.getElementById('welcome').style.display = 'block';
         }
         
         // 매칭 요청 관련 함수들
@@ -436,10 +506,56 @@
             document.getElementById('iconLogin').style.display = 'block';
         }
         
+        // 아이콘 로그인용 데모 사용자 로드
+        async function loadDemoUsers() {
+            try {
+                const response = await fetch('http://localhost:8080/api/demo-users');
+                if (response.ok) {
+                    const users = await response.json();
+                    populateIconLogin(users);
+                } else {
+                    console.error('데모 사용자 로드 실패');
+                }
+            } catch (error) {
+                console.error('데모 사용자 로드 에러:', error);
+            }
+        }
+        
+        // 아이콘 로그인 영역 채우기
+        function populateIconLogin(users) {
+            const mentorGrid = document.getElementById('mentorLoginGrid');
+            const menteeGrid = document.getElementById('menteeLoginGrid');
+            
+            mentorGrid.innerHTML = '';
+            menteeGrid.innerHTML = '';
+            
+            users.forEach(user => {
+                const userCard = `
+                    <div class="user-card" onclick="iconLogin('${user.email}', 'password123')">
+                        <img src="https://placehold.co/500x500.jpg?text=${user.role.toUpperCase()}" alt="${user.name}">
+                        <div class="user-info">
+                            <h4>${user.name}</h4>
+                            <p>${user.email}</p>
+                        </div>
+                    </div>
+                `;
+                
+                if (user.role === 'mentor') {
+                    mentorGrid.innerHTML += userCard;
+                } else {
+                    menteeGrid.innerHTML += userCard;
+                }
+            });
+        }
+        
+        // 아이콘 로그인 실행
+        async function iconLogin(email, password) {
+            await handleLogin(email, password);
+        }
+        
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('HTML DOMContentLoaded 이벤트 발생');
-            alert('페이지가 로드되었습니다! JavaScript가 동작합니다.');
             
             // 로그인 폼 이벤트 리스너 추가
             const loginForm = document.getElementById('loginForm');
@@ -466,6 +582,9 @@
                 });
                 console.log('회원가입 폼 이벤트 리스너 추가됨');
             }
+            
+            // 데모 사용자 로드
+            loadDemoUsers();
         });
         
         // 함수들이 정의되어 있는지 테스트

@@ -36,7 +36,7 @@
 
 ### 1. 프로젝트 클론
 ```bash
-git clone [리포지토리 URL]
+git clone https://github.com/jaydenchoe/mentor-mentee-app.git
 cd mentor-mentee-app
 ```
 
